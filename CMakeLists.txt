@@ -32,6 +32,7 @@ set(CORE_SRCS
   cores/esp32/stdlib_noniso.c
   cores/esp32/Stream.cpp
   cores/esp32/StreamString.cpp
+  cores/esp32/Ticker.cpp
   cores/esp32/USB.cpp
   cores/esp32/USBCDC.cpp
   cores/esp32/wiring_pulse.c
@@ -70,7 +71,6 @@ set(LIBRARY_SRCS
   libraries/SimpleBLE/src/SimpleBLE.cpp
   libraries/SPIFFS/src/SPIFFS.cpp
   libraries/SPI/src/SPI.cpp
-  libraries/Ticker/src/Ticker.cpp
   libraries/Update/src/Updater.cpp
   libraries/Update/src/HttpsOTAUpdate.cpp
   libraries/WebServer/src/WebServer.cpp
@@ -149,7 +149,6 @@ set(includedirs
   libraries/SimpleBLE/src
   libraries/SPIFFS/src
   libraries/SPI/src
-  libraries/Ticker/src
   libraries/Update/src
   libraries/WebServer/src
   libraries/WiFiClientSecure/src
