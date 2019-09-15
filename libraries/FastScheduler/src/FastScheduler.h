@@ -24,6 +24,7 @@
 
 #ifdef __cplusplus
 #include <functional>
+#include <atomic>
 extern "C" {
 #endif
 
@@ -49,11 +50,15 @@ bool schedule_function(const std::function<void(void)>& fn,
 // * Note that it may be more than <repeat_us> microseconds between calls if
 //   `yield` is not called frequently, and therefore should not be used for
 //   timing critical operations.
+// * If a wakeupToken is used, if its value toggles, any remaining
+//   delay is disregarded, and the lambda runs on the next scheduler iteration.
 bool schedule_recurrent_function_us(std::function<bool(void)>&& fn,
     uint32_t repeat_us,
+    const std::atomic<bool>* wakeupToken = nullptr,
     schedule_e policy = SCHEDULE_FUNCTION_FROM_LOOP);
 bool schedule_recurrent_function_us(const std::function<bool(void)>& fn,
     uint32_t repeat_us,
+    const std::atomic<bool>* wakeupToken = nullptr,
     schedule_e policy = SCHEDULE_FUNCTION_FROM_LOOP);
 
 extern "C" {
