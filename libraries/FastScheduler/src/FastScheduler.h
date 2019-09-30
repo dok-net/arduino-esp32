@@ -50,8 +50,8 @@ bool schedule_function(const std::function<void(void)>& fn,
 // * Note that it may be more than <repeat_us> microseconds between calls if
 //   `yield` is not called frequently, and therefore should not be used for
 //   timing critical operations.
-// * If a wakeupToken is used, if its value toggles, any remaining
-//   delay is disregarded, and the lambda runs on the next scheduler iteration.
+// * If a wakeupToken is used, anytime during scheduling when its value differs from that
+//   during this call, any remaining delay from repeat_us is disregarded, and fn is executed.
 bool schedule_recurrent_function_us(std::function<bool(void)>&& fn,
     uint32_t repeat_us,
     const std::atomic<bool>* wakeupToken = nullptr,
