@@ -1,5 +1,6 @@
 #include "FastScheduler.h"
 #include <PolledTimeout.h>
+#include <atomic>
 #ifdef ESP8266
 #include <interrupts.h>
 #include <coredecls.h>

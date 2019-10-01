@@ -24,7 +24,6 @@
 
 #ifdef __cplusplus
 #include <functional>
-#include <atomic>
 extern "C" {
 #endif
 
@@ -54,11 +53,11 @@ bool schedule_function(const std::function<void(void)>& fn,
 //   any remaining delay from repeat_us is disregarded, and fn is executed.
 bool schedule_recurrent_function_us(std::function<bool(void)>&& fn,
     uint32_t repeat_us,
-    std::function<bool()> alarm = nullptr,
+    std::function<bool(void)> alarm = nullptr,
     schedule_e policy = SCHEDULE_FUNCTION_FROM_LOOP);
 bool schedule_recurrent_function_us(const std::function<bool(void)>& fn,
     uint32_t repeat_us,
-    std::function<bool()> alarm = nullptr,
+    std::function<bool(void)> alarm = nullptr,
     schedule_e policy = SCHEDULE_FUNCTION_FROM_LOOP);
 
 extern "C" {
