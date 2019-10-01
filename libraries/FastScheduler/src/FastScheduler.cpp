@@ -34,8 +34,7 @@ struct scheduled_fn_t
     mFuncT mFunc = nullptr;
     esp8266::polledTimeout::periodicFastUs callNow;
     schedule_e policy = SCHEDULE_FUNCTION_FROM_LOOP;
-    const std::atomic<bool>* wakeupToken = nullptr;
-    bool wakeupTokenCmp = false;
+    std::function<bool()> alarm = nullptr;
     scheduled_fn_t() : callNow(esp8266::polledTimeout::periodicFastUs::alwaysExpired) { }
 };
 
@@ -46,20 +45,21 @@ namespace {
     static schedule_e activePolicy;
 };
 
-bool IRAM_ATTR schedule_recurrent_function_us(std::function<bool(void)>&& fn, uint32_t repeat_us, const std::atomic<bool>* wakeupToken, schedule_e policy)
+bool IRAM_ATTR schedule_recurrent_function_us(std::function<bool(void)>&& fn, uint32_t repeat_us,
+    std::function<bool()> alarm, schedule_e policy)
 {
     scheduled_fn_t item;
     item.mFunc = std::move(fn);
     if (repeat_us) item.callNow.reset(repeat_us);
     item.policy = policy;
-    item.wakeupToken = wakeupToken;
-    item.wakeupTokenCmp = wakeupToken && wakeupToken->load();
+    item.alarm = std::move(alarm);
     return schedule_queue.push(std::move(item));
 }
 
-bool IRAM_ATTR schedule_recurrent_function_us(const std::function<bool(void)>& fn, uint32_t repeat_us, const std::atomic<bool>* wakeupToken, schedule_e policy)
+bool IRAM_ATTR schedule_recurrent_function_us(const std::function<bool(void)>& fn, uint32_t repeat_us,
+    std::function<bool()> alarm, schedule_e policy)
 {
-    return schedule_recurrent_function_us(std::function<bool(void)>(fn), repeat_us, wakeupToken, policy);
+    return schedule_recurrent_function_us(std::function<bool(void)>(fn), repeat_us, std::move(alarm), policy);
 }
 
 bool IRAM_ATTR schedule_function(std::function<void(void)>&& fn, schedule_e policy)
@@ -85,8 +85,7 @@ bool run_function(scheduled_fn_t& func)
 #endif
     }
     if (func.policy != SCHEDULE_FUNCTION_WITHOUT_YIELDELAYCALLS && activePolicy != SCHEDULE_FUNCTION_FROM_LOOP) return true;
-    bool wakeupToken = func.wakeupToken && func.wakeupToken->load();
-    bool wakeup = func.wakeupTokenCmp != wakeupToken;
+    bool wakeup = func.alarm && func.alarm();
     bool callNow = func.callNow;
     return !(wakeup || callNow) || func.mFunc();
 }
