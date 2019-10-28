@@ -47,13 +47,13 @@ namespace {
 };
 
 bool IRAM_ATTR schedule_recurrent_function_us(std::function<bool(void)>&& fn, uint32_t repeat_us,
-    std::function<bool()> alarm, schedule_e policy)
+    const std::function<bool(void)>& alarm, schedule_e policy)
 {
     scheduled_fn_t item;
     item.mFunc = std::move(fn);
     if (repeat_us) item.callNow.reset(repeat_us);
     item.policy = policy;
-    item.alarm = std::move(alarm);
+    item.alarm = alarm;
     return schedule_queue.push(std::move(item));
 }
 
