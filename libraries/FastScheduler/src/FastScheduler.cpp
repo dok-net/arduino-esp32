@@ -42,8 +42,12 @@ struct scheduled_fn_t
 // anonymous namespace provides compilation-unit internal linkage
 namespace {
     static circular_queue_mp<scheduled_fn_t> schedule_queue(SCHEDULED_FN_MAX_COUNT);
-    static esp8266::polledTimeout::periodicFastMs yieldSchedulerNow(100); // yield every 100ms
     static schedule_e activePolicy;
+#if defined(ESP32)
+    static esp8266::polledTimeout::periodicFastMs yieldSchedulerNow(10); // yield every 10ms
+#elif !defined(ESP8266)
+    static uint32_t yieldIntvl_us;
+#endif
 };
 
 bool IRAM_ATTR schedule_recurrent_function_us(std::function<bool(void)>&& fn, uint32_t repeat_us,
@@ -75,16 +79,17 @@ bool IRAM_ATTR schedule_function(const std::function<void(void)>& fn, schedule_e
 
 bool run_function(scheduled_fn_t& func)
 {
-    if (yieldSchedulerNow) {
-#if defined(ESP8266)
-        esp_schedule();
-        cont_yield(g_pcont);
-#elif defined(ESP32)
-        vPortYield();
+#if defined(ESP32)
+    if (yieldSchedulerNow) yield();
+#elif defined(ESP8266)
+    optimistic_yield(10000);
 #else
+    if (micros() - yieldIntvl_us > 10000)
+    {
         yield();
-#endif
+        yieldIntvl_us = micros();
     }
+#endif
     if (func.policy != SCHEDULE_FUNCTION_WITHOUT_YIELDELAYCALLS && activePolicy != SCHEDULE_FUNCTION_FROM_LOOP) return true;
     bool wakeup = func.alarm && func.alarm();
     bool callNow = func.callNow;
@@ -113,7 +118,11 @@ void run_scheduled_functions(schedule_e policy)
     if (fence.exchange(true)) return;
 #endif
 
-    yieldSchedulerNow.reset(100);
+#if defined(ESP32)
+    yieldSchedulerNow.reset(10); // yield every 10ms
+#elif !defined(ESP8266)
+    yieldIntvl_us = micros();
+#endif
     activePolicy = policy;
 
     // run scheduled function:
